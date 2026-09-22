@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學校放學班牌看板系統</title>
+  <script type="application/json" id="sayo-db-schema">
+  {
+    "collections": [
+      {
+        "name": "board_status",
+        "label": "看板狀態",
+        "fields": ["id", "released", "updatedAt"]
+      }
+    ]
+  }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      background-color: #0b1320;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex items-center justify-center p-3 sm:p-6 font-sans">
+
+  <!-- 外層主容器 (還原深色卡片與淺米色邊框) -->
+  <div class="w-full max-w-5xl bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-4 sm:p-7 shadow-2xl flex flex-col md:flex-row gap-5 lg:gap-7 items-stretch">
+    
+    <!-- 左側面板：已放學列表與重置按鈕 -->
+    <div class="w-full md:w-72 lg:w-80 flex flex-col justify-between bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-5 shadow-inner">
+      
+      <!-- 頂部資訊區 -->
+      <div class="flex flex-col items-center">
+        <!-- 頂部白底膠囊標題 -->
+        <div class="w-full bg-white text-slate-900 font-black text-center py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg sm:text-xl tracking-wider">
+          <span class="text-amber-500 text-xl">⭐</span>
+          <span>已放學班別</span>
+          <span class="text-amber-500 text-xl">⭐</span>
+        </div>
+
+        <!-- 提示文字 -->
+        <p class="text-amber-400 font-medium text-sm mt-3 tracking-wide text-center">
+          *白色是已放學班別
+        </p>
+
+        <!-- 即時已放學班別展示區域 -->
+        <div id="releasedContainer" class="w-full mt-4 flex-1 min-h-[160px] md:min-h-[320px] max-h-[420px] overflow-y-auto custom-scrollbar flex flex-wrap content-start gap-2 p-2">
+          <!-- 動態渲染已放學標籤 -->
+        </div>
+      </div>
+
+      <!-- 底部重置按鈕 -->
+      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+        <button 
+          id="resetBtn"
+          class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all duration-150 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-base tracking-wide"
+        >
+          <span class="text-lg">🔄</span>
+          <span>重置班牌</span>
+        </button>
+
+        <!-- 跨裝置同步狀態條 -->
+        <div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-lg text-xs">
+          <div class="flex items-center gap-1.5">
+            <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="syncText" class="text-slate-300">多裝置即時同步中</span>
+          </div>
+          <button id="openSyncModalBtn" class="text-blue-400 hover:text-blue-300 underline font-medium">
+            設定房間
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 右側面板：班牌網格區 (6年級 x 5班) -->
+    <div class="flex-1 bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-6 shadow-inner flex flex-col justify-center">
+      
+      <!-- 6行 x 5列 網格 -->
+      <div id="gridContainer" class="grid grid-cols-5 gap-2.5 sm:gap-3.5 lg:gap-4 w-full">
+        <!-- 由 JavaScript 動態生成班級按鈕 (6A-6E 至 1A-1E) -->
+      </div>
+
+      <!-- 快速批次操作輔助欄 -->
+      <div class="mt-5 pt-4 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+        <div class="flex items-center gap-1.5">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>iPad 點擊立即同步到大螢幕電視</span>
+        </div>
+        <div class="flex gap-2">
+          <button id="selectAllBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">全選放學</button>
+          <button id="broadcastBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1">
+            <span>🔊</span><span>語音廣播</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 房間設定彈窗 -->
+  <div id="syncModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-[#111c2e] border border-[#e6d5b8]/50 rounded-2xl p-6 max-w-md w-full shadow-2xl text-slate-100">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold flex items-center gap-2">
+          <span>📡</span><span>跨裝置同步設定</span>
+        </h3>
+        <button id="closeSyncModalBtn" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+      <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+        在 iPad 和電視／大螢幕網頁輸入<strong class="text-amber-400">相同的同步頻道代碼</strong>，iPad 上一按班牌，大螢幕將在 0.5 秒內即時同步變色！
+      </p>
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-slate-400 mb-1">同步頻道代碼 (Room ID)</label>
+        <input 
+          id="roomInput" 
+          type="text" 
+          placeholder="例如：my-school-dismissal" 
+          class="w-full bg-[#0b1320] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-mono"
+        />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button id="saveRoomBtn" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-lg transition">
+          保存並連線
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 班級配置：6年級到1年級，每級 A 至 E
+    const GRADES = ['6', '5', '4', '3', '2', '1'];
+    const SECTIONS = ['A', 'B', 'C', 'D', 'E'];
+    const ALL_CLASSES = [];
+    GRADES.forEach(g => {
+      SECTIONS.forEach(s => {
+        ALL_CLASSES.push(`${g}${s}`);
+      });
+    });
+
+    // 狀態管理：儲存已放學的班別集合
+    let releasedClasses = new Set();
+    const STORAGE_KEY = 'school_released_classes_v1';
+    const ROOM_STORAGE_KEY = 'school_sync_room_id';
+    let currentRoom = 'school-dismissal-board-default';
+    let mqttClient = null;
+    let isBroadcasting = false;
+
+    // 初始化與加載已保存狀態
+    async function loadState() {
+      // 讀取設定的房間代碼
+      try {
+        const savedRoom = localStorage.getItem(ROOM_STORAGE_KEY);
+        if (savedRoom) {
+          currentRoom = savedRoom;
+        }
+        document.getElementById('roomInput').value = currentRoom;
+      } catch(e) {}
+
+      // 優先從平台雲端載入
+      let loadedFromCloud = false;
+      if (window.sayoDb) {
+        try {
+          const list = await window.sayoDb.get('board_status');
+          if (Array.isArray(list) && list.length > 0) {
+            const latest = list[0];
+            if (latest && Array.isArray(latest.released)) {
+              releasedClasses = new Set(latest.released);
+              loadedFromCloud = true;
+            }
+          }
+        } catch(e) {
+          console.error('Cloud load failed', e);
+        }
+      }
+
+      // 若未有雲端記錄，嘗試從本機載入
+      if (!loadedFromCloud) {
+        try {
+          if (window.sayoStorage) {
+            const saved = await window.sayoStorage.getItem(STORAGE_KEY);
+            if (saved) releasedClasses = new Set(JSON.parse(saved));
+          } else {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) releasedClasses = new Set(JSON.parse(saved));
+          }
+        } catch (err) {
+          console.error('Failed to load local state', err);
+        }
+      }
+
+      render();
+      initRealtimeSync();
+    }
+
+    // 儲存狀態並發送同步廣播
+    async function saveState(fromRemote = false) {
+      const arr = Array.from(releasedClasses);
+      
+      // 1. 本地儲存
+      try {
+        if (window.sayoStorage) {
+          await window.sayoStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+        }
+      } catch (err) {
+        console.error('Failed to save state', err);
+      }
+
+      // 如果是接收到遠端指令更新的，不需重複向外發送廣播
+      if (fromRemote) return;
+
+      // 2. 雲端平台同步保存
+      if (window.sayoDb) {
+        try {
+          await window.sayoDb.set('board_status', [{
+            id: 'current_board',
+            released: arr,
+            updatedAt: Date.now()
+          }]);
+        } catch(e) {
+          console.error('sayoDb set failed', e);
+        }
+      }
+
+      // 3. 跨裝置即時 WebSocket 廣播
+      if (mqttClient && mqttClient.connected) {
+        const payload = JSON.stringify({
+          action: 'sync',
+          released: arr,
+          timestamp: Date.now()
+        });
+        mqttClient.publish(`sayo-school/${currentRoom}`, payload, { retain: true });
+      }
+    }
+
+    // 初始化跨裝置即時廣播 (MQTT over WSS，免伺服器即開即用)
+    function initRealtimeSync() {
+      const syncDot = document.getElementById('syncDot');
+      const syncText = document.getElementById('syncText');
+
+      if (mqttClient) {
+        try { mqttClient.end(); } catch(e) {}
+      }
+
+      try {
+        // 連接公共安全 WebSocket 廣播 Broker (支援 iPad、電視、手機零延遲同步)
+        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+          clientId: 'board_' + Math.random().toString(16).substr(2, 8),
+          clean: true,
+          connectTimeout: 5000
+        });
+
+        mqttClient.on('connect', () => {
+          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+          syncText.textContent = `同步連線中 (房號: ${currentRoom.substring(0, 10)}...)`;
+          mqttClient.subscribe(`sayo-school/${currentRoom}`);
+        });
+
+        mqttClient.on('message', (topic, message) => {
+          try {
+            const data = JSON.parse(message.toString());
+            if (data && Array.isArray(data.released)) {
+              // 比較是否有變動
+              const newArr = data.released;
+              const currentArr = Array.from(releasedClasses);
+              const isDifferent = newArr.length !== currentArr.length || newArr.some(c => !releasedClasses.has(c));
+              
+              if (isDifferent) {
+                releasedClasses = new Set(newArr);
+                saveState(true); // 本地保存，不重複外播
+                render();
+              }
+            }
+          } catch(err) {
+            console.error('Sync parse error', err);
+          }
+        });
+
+        mqttClient.on('offline', () => {
+          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+          syncText.textContent = '連線中斷重連中...';
+        });
+
+        mqttClient.on('error', () => {
+          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+          syncText.textContent = '本地離線模式';
+        });
+
+      } catch(err) {
+        console.warn('Realtime init error', err);
+        syncDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+        syncText.textContent = '本地模式';
+      }
+
+      // 定期輪詢雲端資料庫作為雙重保障
+      if (window.sayoDb) {
+        setInterval(async () => {
+          try {
+            const list = await window.sayoDb.get('board_status');
+            if (Array.isArray(list) && list.length > 0) {
+              const latest = list[0];
+              if (latest && Array.isArray(latest.released)) {
+                const newArr = latest.released;
+                const currentArr = Array.from(releasedClasses);
+                const isDifferent = newArr.length !== currentArr.length || newArr.some(c => !releasedClasses.has(c));
+                if (isDifferent) {
+                  releasedClasses = new Set(newArr);
+                  render();
+                }
+              }
+            }
+          } catch(e) {}
+        }, 3000);
+      }
+    }
+
+    // 房間設定彈窗事件
+    const syncModal = document.getElementById('syncModal');
+    document.getElementById('openSyncModalBtn').onclick = () => {
+      syncModal.classList.remove('hidden');
+      syncModal.classList.add('flex');
+    };
+    document.getElementById('closeSyncModalBtn').onclick = () => {
+      syncModal.classList.add('hidden');
+      syncModal.classList.remove('flex');
+    };
+    document.getElementById('saveRoomBtn').onclick = () => {
+      const val = document.getElementById('roomInput').value.trim();
+      if (val) {
+        currentRoom = val;
+        try { localStorage.setItem(ROOM_STORAGE_KEY, val); } catch(e) {}
+        syncModal.classList.add('hidden');
+        syncModal.classList.remove('flex');
+        initRealtimeSync();
+      }
+    };
+
+    // 切換放學狀態
+    function toggleClass(className) {
+      if (releasedClasses.has(className)) {
+        releasedClasses.delete(className);
+      } else {
+        releasedClasses.add(className);
+      }
+      saveState();
+      render();
+    }
+
+    // 渲染主畫面
+    function render() {
+      const grid = document.getElementById('gridContainer');
+      grid.innerHTML = '';
+
+      ALL_CLASSES.forEach(cls => {
+        const isReleased = releasedClasses.has(cls);
+        const btn = document.createElement('button');
+        btn.textContent = cls;
+        btn.setAttribute('data-class', cls);
+
+        // 樣式：
+        // 未放學：深藍灰底色、暗灰藍文字 (#60738a)
+        // 已放學：亮白底色、深色字體、加粗、微放大浮凸陰影
+        if (isReleased) {
+          btn.className = `
+            h-12 sm:h-14 lg:h-16 rounded-xl font-black text-lg sm:text-xl lg:text-2xl 
+            bg-white text-slate-900 shadow-[0_4px_16px_rgba(255,255,255,0.25)] 
+            scale-[1.02] border-2 border-white transition-all duration-150 
+            flex items-center justify-center active:scale-95
+          `;
+        } else {
+          btn.className = `
+            h-12 sm:h-14 lg:h-16 rounded-xl font-bold text-lg sm:text-xl lg:text-2xl 
+            bg-[#172538] hover:bg-[#1d2f47] text-[#556982] hover:text-[#7f97b5] 
+            border border-[#263a54] shadow-sm transition-all duration-150 
+            flex items-center justify-center active:scale-95
+          `;
+        }
+
+        btn.onclick = () => toggleClass(cls);
+        grid.appendChild(btn);
+      });
+
+      // 渲染左側已放學名單
+      const releasedContainer = document.getElementById('releasedContainer');
+      releasedContainer.innerHTML = '';
+
+      if (releasedClasses.size === 0) {
+        releasedContainer.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-slate-500 text-sm text-center py-8">
+            <span class="text-2xl mb-1 opacity-40">🏫</span>
+            <span>尚無班別放學</span>
+            <span class="text-xs text-slate-600 mt-1">點擊右側班牌切換</span>
+          </div>
+        `;
+      } else {
+        // 排序按原年級與班別展示
+        const sortedList = ALL_CLASSES.filter(c => releasedClasses.has(c));
+        sortedList.forEach(cls => {
+          const badge = document.createElement('div');
+          badge.className = `
+            inline-flex items-center justify-center px-3 py-1.5 rounded-lg 
+            bg-white text-slate-950 font-black text-base shadow-sm border border-slate-200
+            hover:bg-red-50 hover:text-red-600 transition cursor-pointer group
+          `;
+          badge.title = '點擊可取消放學';
+          badge.innerHTML = `
+            <span>${cls}</span>
+            <span class="ml-1.5 text-xs text-slate-400 group-hover:text-red-500 font-normal">✕</span>
+          `;
+          badge.onclick = () => toggleClass(cls);
+          releasedContainer.appendChild(badge);
+        });
+      }
+    }
+
+    // 重置按鈕
+    document.getElementById('resetBtn').onclick = () => {
+      if (releasedClasses.size === 0) return;
+      if (confirm('確定要重置所有班牌嗎？所有班別將恢復為「未放學」狀態。')) {
+        releasedClasses.clear();
+        saveState();
+        render();
+      }
+    };
+
+    // 全選按鈕
+    document.getElementById('selectAllBtn').onclick = () => {
+      if (confirm('確定將全部 30 個班別設為「已放學」嗎？')) {
+        ALL_CLASSES.forEach(c => releasedClasses.add(c));
+        saveState();
+        render();
+      }
+    };
+
+    // 語音廣播提示
+    document.getElementById('broadcastBtn').onclick = () => {
+      if (releasedClasses.size === 0) {
+        alert('目前未有已放學班別。');
+        return;
+      }
+      if ('speechSynthesis' in window) {
+        const sorted = ALL_CLASSES.filter(c => releasedClasses.has(c));
+        const text = `已放學班別包括：${sorted.join('、')}。請家長留意。`;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'zh-HK';
+        window.speechSynthesis.speak(utter);
+      } else {
+        alert('您的瀏覽器不支援語音播放。');
+      }
+    };
+
+    // 啟動加載
+    loadState();
+  </script>
+</body>
+</html>
