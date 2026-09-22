@@ -57,35 +57,28 @@
         </div>
 
         <!-- 提示文字 -->
-        <p class="text-amber-400 font-medium text-sm mt-3 tracking-wide text-center">
+        <p class="text-amber-400 font-bold text-sm mt-3 tracking-wide text-center">
           *白色是已放學班別
         </p>
-
-        <!-- 即時已放學班別展示區域 -->
-        <div id="releasedContainer" class="w-full mt-4 flex-1 min-h-[160px] md:min-h-[320px] max-h-[420px] overflow-y-auto custom-scrollbar flex flex-wrap content-start gap-2 p-2">
-          <!-- 動態渲染已放學標籤 -->
-        </div>
       </div>
 
-      <!-- 底部重置按鈕 -->
-      <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+      <!-- 底部重置按鈕與極簡同步狀態 -->
+      <div class="mt-auto pt-4 flex flex-col gap-2.5">
         <button 
           id="resetBtn"
-          class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all duration-150 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-base tracking-wide"
+          class="w-full py-3.5 px-4 bg-[#10b981] hover:bg-[#059669] active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-base tracking-wide"
         >
           <span class="text-lg">🔄</span>
           <span>重置班牌</span>
         </button>
 
-        <!-- 跨裝置同步狀態條 -->
-        <div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-lg text-xs">
-          <div class="flex items-center gap-1.5">
-            <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="syncText" class="text-slate-300">多裝置即時同步中</span>
+        <!-- 隱藏式/精簡同步資訊（點擊可換房間） -->
+        <div class="flex items-center justify-between px-2 pt-1 text-[11px] text-slate-500">
+          <div class="flex items-center gap-1.5 cursor-pointer hover:text-slate-400" id="openSyncModalBtn" title="點擊切換同步房間">
+            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="syncText">即時同步中</span>
           </div>
-          <button id="openSyncModalBtn" class="text-blue-400 hover:text-blue-300 underline font-medium">
-            設定房間
-          </button>
+          <span class="text-[10px] text-slate-600">iPad / 電視同步</span>
         </div>
       </div>
 
@@ -95,23 +88,10 @@
     <div class="flex-1 bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-6 shadow-inner flex flex-col justify-center">
       
       <!-- 6行 x 5列 網格 -->
-      <div id="gridContainer" class="grid grid-cols-5 gap-2.5 sm:gap-3.5 lg:gap-4 w-full">
+      <div id="gridContainer" class="grid grid-cols-5 gap-3 sm:gap-4 lg:gap-4 w-full h-full content-center">
         <!-- 由 JavaScript 動態生成班級按鈕 (6A-6E 至 1A-1E) -->
       </div>
-
-      <!-- 快速批次操作輔助欄 -->
-      <div class="mt-5 pt-4 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-        <div class="flex items-center gap-1.5">
-          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>iPad 點擊立即同步到大螢幕電視</span>
-        </div>
-        <div class="flex gap-2">
-          <button id="selectAllBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">全選放學</button>
-          <button id="broadcastBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1">
-            <span>🔊</span><span>語音廣播</span>
-          </button>
-        </div>
-      </div>
+    </div>
 
     </div>
 
@@ -378,96 +358,37 @@
         btn.textContent = cls;
         btn.setAttribute('data-class', cls);
 
-        // 樣式：
-        // 未放學：深藍灰底色、暗灰藍文字 (#60738a)
-        // 已放學：亮白底色、深色字體、加粗、微放大浮凸陰影
+        // 樣式 100% 還原原圖：
+        // 未放學：深青藍按鈕底色 (#1f2f45)、暗藍文字 (#466482)、圓角與細邊框
+        // 已放學：亮白底色 (#ffffff)、深黑文字、強烈白色光暈光芒 (glow)
         if (isReleased) {
           btn.className = `
-            h-12 sm:h-14 lg:h-16 rounded-xl font-black text-lg sm:text-xl lg:text-2xl 
-            bg-white text-slate-900 shadow-[0_4px_16px_rgba(255,255,255,0.25)] 
-            scale-[1.02] border-2 border-white transition-all duration-150 
-            flex items-center justify-center active:scale-95
+            h-14 sm:h-16 lg:h-16 rounded-xl font-black text-xl sm:text-2xl 
+            bg-white text-slate-900 border-2 border-white
+            shadow-[0_0_20px_rgba(255,255,255,0.7),0_0_35px_rgba(255,255,255,0.35)] 
+            scale-[1.02] z-10 transition-all duration-150 
+            flex items-center justify-center active:scale-95 cursor-pointer
           `;
         } else {
           btn.className = `
-            h-12 sm:h-14 lg:h-16 rounded-xl font-bold text-lg sm:text-xl lg:text-2xl 
-            bg-[#172538] hover:bg-[#1d2f47] text-[#556982] hover:text-[#7f97b5] 
-            border border-[#263a54] shadow-sm transition-all duration-150 
-            flex items-center justify-center active:scale-95
+            h-14 sm:h-16 lg:h-16 rounded-xl font-bold text-xl sm:text-2xl 
+            bg-[#213247] hover:bg-[#283d57] text-[#4d6b8b] hover:text-[#6a8eb8] 
+            border border-[#2d425c] shadow-sm transition-all duration-150 
+            flex items-center justify-center active:scale-95 cursor-pointer
           `;
         }
 
         btn.onclick = () => toggleClass(cls);
         grid.appendChild(btn);
       });
-
-      // 渲染左側已放學名單
-      const releasedContainer = document.getElementById('releasedContainer');
-      releasedContainer.innerHTML = '';
-
-      if (releasedClasses.size === 0) {
-        releasedContainer.innerHTML = `
-          <div class="w-full h-full flex flex-col items-center justify-center text-slate-500 text-sm text-center py-8">
-            <span class="text-2xl mb-1 opacity-40">🏫</span>
-            <span>尚無班別放學</span>
-            <span class="text-xs text-slate-600 mt-1">點擊右側班牌切換</span>
-          </div>
-        `;
-      } else {
-        // 排序按原年級與班別展示
-        const sortedList = ALL_CLASSES.filter(c => releasedClasses.has(c));
-        sortedList.forEach(cls => {
-          const badge = document.createElement('div');
-          badge.className = `
-            inline-flex items-center justify-center px-3 py-1.5 rounded-lg 
-            bg-white text-slate-950 font-black text-base shadow-sm border border-slate-200
-            hover:bg-red-50 hover:text-red-600 transition cursor-pointer group
-          `;
-          badge.title = '點擊可取消放學';
-          badge.innerHTML = `
-            <span>${cls}</span>
-            <span class="ml-1.5 text-xs text-slate-400 group-hover:text-red-500 font-normal">✕</span>
-          `;
-          badge.onclick = () => toggleClass(cls);
-          releasedContainer.appendChild(badge);
-        });
-      }
     }
 
     // 重置按鈕
     document.getElementById('resetBtn').onclick = () => {
       if (releasedClasses.size === 0) return;
-      if (confirm('確定要重置所有班牌嗎？所有班別將恢復為「未放學」狀態。')) {
-        releasedClasses.clear();
-        saveState();
-        render();
-      }
-    };
-
-    // 全選按鈕
-    document.getElementById('selectAllBtn').onclick = () => {
-      if (confirm('確定將全部 30 個班別設為「已放學」嗎？')) {
-        ALL_CLASSES.forEach(c => releasedClasses.add(c));
-        saveState();
-        render();
-      }
-    };
-
-    // 語音廣播提示
-    document.getElementById('broadcastBtn').onclick = () => {
-      if (releasedClasses.size === 0) {
-        alert('目前未有已放學班別。');
-        return;
-      }
-      if ('speechSynthesis' in window) {
-        const sorted = ALL_CLASSES.filter(c => releasedClasses.has(c));
-        const text = `已放學班別包括：${sorted.join('、')}。請家長留意。`;
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'zh-HK';
-        window.speechSynthesis.speak(utter);
-      } else {
-        alert('您的瀏覽器不支援語音播放。');
-      }
+      releasedClasses.clear();
+      saveState();
+      render();
     };
 
     // 啟動加載
