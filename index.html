@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>學校放學班牌看板系統</title>
+  <title>學校放學班牌看板系統 (大螢幕直向)</title>
   <script type="application/json" id="sayo-db-schema">
   {
     "collections": [
@@ -23,73 +23,71 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.35);
-    }
   </style>
 </head>
-<body class="min-h-screen text-slate-100 flex items-center justify-center p-3 sm:p-6 font-sans">
+<body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col items-center justify-center p-2 sm:p-4 font-sans bg-[#0b1320]">
 
-  <!-- 外層主容器 (深色卡片與淺米色邊框) -->
-  <div class="w-full max-w-5xl bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col gap-4 sm:gap-5">
+  <!-- 外層主容器：專為大螢幕直向/直立分屏打造 (Portrait 滿版直屏佈局) -->
+  <div class="w-full max-w-xl sm:max-w-2xl h-full flex flex-col bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-3 sm:p-4 shadow-2xl gap-2.5 sm:gap-3.5">
     
-    <!-- 置頂控制面板：已放學標題、說明提示、同步狀態與重置按鈕 -->
-    <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-3 sm:p-4 shadow-inner flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+    <!-- 置頂控制面板：醒目標題、提示與控制按鈕 -->
+    <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-2.5 sm:p-3.5 shadow-inner flex flex-col items-center gap-2 shrink-0">
       
-      <!-- 標題與說明提示 -->
-      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-        <!-- 白底膠囊標題 -->
-        <div class="bg-white text-slate-900 font-black py-2 px-5 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg sm:text-xl tracking-wider">
-          <span class="text-amber-500 text-lg sm:text-xl">⭐</span>
+      <!-- 標題欄與全螢幕按鈕 -->
+      <div class="w-full flex items-center justify-between gap-2">
+        <!-- 白底膠囊大標題 -->
+        <div class="flex-1 bg-white text-slate-900 font-black py-2 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-xl sm:text-2xl md:text-3xl tracking-wider">
+          <span class="text-amber-500">⭐</span>
           <span>已放學班別</span>
-          <span class="text-amber-500 text-lg sm:text-xl">⭐</span>
+          <span class="text-amber-500">⭐</span>
         </div>
 
-        <!-- 提示文字 -->
-        <p class="text-amber-400 font-bold text-sm tracking-wide">
-          *白色是已放學班別
-        </p>
+        <!-- 一鍵全螢幕按鈕 (便於大螢幕直向展示) -->
+        <button 
+          id="fullscreenBtn" 
+          class="p-2 sm:p-2.5 bg-[#1a293f] hover:bg-[#233754] active:scale-95 text-slate-300 hover:text-white rounded-xl border border-[#2d425c] transition flex items-center justify-center shrink-0"
+          title="切換全螢幕"
+        >
+          <span class="text-lg sm:text-xl">⛶</span>
+        </button>
       </div>
 
-      <!-- 右側操作區：同步狀態 + 重置按鈕 -->
-      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-        <!-- 同步資訊狀態標籤（點擊可切換頻道代碼） -->
-        <div 
-          id="openSyncModalBtn" 
-          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#111c2e] hover:bg-[#18263e] border border-[#22354e] cursor-pointer text-xs text-slate-300 transition-colors shadow-sm"
-          title="點擊切換同步房間"
-        >
-          <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="syncText" class="font-mono">即時同步中</span>
-        </div>
+      <!-- 說明提示與同步狀態/重置按鈕 -->
+      <div class="w-full flex items-center justify-between px-1">
+        <!-- 提示文字 -->
+        <p class="text-amber-400 font-bold text-xs sm:text-sm tracking-wide">
+          *白色是已放學班別
+        </p>
 
-        <!-- 重置按鈕 -->
-        <button 
-          id="resetBtn"
-          class="py-2.5 px-5 bg-[#10b981] hover:bg-[#059669] active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm sm:text-base tracking-wide shrink-0"
-        >
-          <span class="text-base">🔄</span>
-          <span>重置班牌</span>
-        </button>
+        <!-- 狀態與重置按鈕 -->
+        <div class="flex items-center gap-2">
+          <!-- 同步狀態標籤 -->
+          <div 
+            id="openSyncModalBtn" 
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111c2e] hover:bg-[#18263e] border border-[#22354e] cursor-pointer text-slate-300 transition shadow-sm"
+            title="點擊切換同步房間"
+          >
+            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="syncText" class="font-mono text-[11px]">即時同步中</span>
+          </div>
+
+          <!-- 重置按鈕 -->
+          <button 
+            id="resetBtn"
+            class="py-1.5 px-3 bg-[#10b981] hover:bg-[#059669] active:scale-[0.98] transition-all text-white font-bold rounded-lg shadow flex items-center gap-1 text-xs sm:text-sm tracking-wide shrink-0"
+          >
+            <span>🔄</span>
+            <span>重置</span>
+          </button>
+        </div>
       </div>
 
     </div>
 
-    <!-- 下方主面板：班牌網格區 (6年級 x 5班) -->
-    <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-6 shadow-inner flex flex-col justify-center">
-      <!-- 6行 x 5列 網格 -->
-      <div id="gridContainer" class="grid grid-cols-5 gap-2.5 sm:gap-3.5 lg:gap-4 w-full content-center">
+    <!-- 下方主面板：班牌網格區 (6年級 x 5班，6行均分填滿直向高度) -->
+    <div class="flex-1 w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-2.5 sm:p-3.5 shadow-inner flex flex-col overflow-hidden">
+      <!-- 6行 x 5列 均分垂直空間 -->
+      <div id="gridContainer" class="grid grid-cols-5 grid-rows-6 gap-2 sm:gap-2.5 lg:gap-3 w-full h-full">
         <!-- 由 JavaScript 動態生成班級按鈕 (6A-6E 至 1A-1E) -->
       </div>
     </div>
@@ -106,7 +104,7 @@
         <button id="closeSyncModalBtn" class="text-slate-400 hover:text-white text-xl">✕</button>
       </div>
       <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-        在 iPad 和電視／大螢幕網頁輸入<strong class="text-amber-400">相同的同步頻道代碼</strong>，iPad 上一按班牌，大螢幕將即時同步變色！
+        在 iPad 和大螢幕網頁輸入<strong class="text-amber-400">相同的同步頻道代碼</strong>，iPad 上一按班牌，大螢幕將即時同步變色！
       </p>
       <div class="mb-4">
         <label class="block text-xs font-medium text-slate-400 mb-1">同步頻道代碼 (Room ID)</label>
@@ -249,8 +247,8 @@
         });
 
         mqttClient.on('connect', () => {
-          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-          syncText.textContent = `同步連線中 (${currentRoom.substring(0, 10)}...)`;
+          syncDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+          syncText.textContent = `同步中 (${currentRoom.substring(0, 8)}...)`;
           mqttClient.subscribe(`sayo-school/${currentRoom}`);
         });
 
@@ -274,18 +272,18 @@
         });
 
         mqttClient.on('offline', () => {
-          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
-          syncText.textContent = '連線中斷重連中...';
+          syncDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          syncText.textContent = '重新連線中...';
         });
 
         mqttClient.on('error', () => {
-          syncDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
-          syncText.textContent = '本地離線模式';
+          syncDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+          syncText.textContent = '離線模式';
         });
 
       } catch(err) {
         console.warn('Realtime init error', err);
-        syncDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+        syncDot.className = 'w-2 h-2 rounded-full bg-slate-500';
         syncText.textContent = '本地模式';
       }
 
@@ -343,7 +341,7 @@
       render();
     }
 
-    // 渲染主畫面
+    // 渲染主畫面 (直向大螢幕滿版等比拉伸，特大字號)
     function render() {
       const grid = document.getElementById('gridContainer');
       grid.innerHTML = '';
@@ -354,18 +352,18 @@
         btn.textContent = cls;
         btn.setAttribute('data-class', cls);
 
-        // 未放學 vs 已放學樣式
+        // 未放學 vs 已放學樣式 (均分縱向高度，大字體超清晰)
         if (isReleased) {
           btn.className = `
-            h-14 sm:h-16 lg:h-18 rounded-xl font-black text-xl sm:text-2xl 
-            bg-white text-slate-900 border-2 border-white
-            shadow-[0_0_22px_rgba(255,255,255,0.75),0_0_36px_rgba(255,255,255,0.4)] 
-            scale-[1.02] z-10 transition-all duration-150 
+            w-full h-full rounded-xl sm:rounded-2xl font-black text-2xl sm:text-3xl md:text-4xl 
+            bg-white text-slate-900 border-2 sm:border-4 border-white
+            shadow-[0_0_24px_rgba(255,255,255,0.85),0_0_40px_rgba(255,255,255,0.45)] 
+            scale-[1.03] z-10 transition-all duration-150 
             flex items-center justify-center active:scale-95 cursor-pointer
           `;
         } else {
           btn.className = `
-            h-14 sm:h-16 lg:h-18 rounded-xl font-bold text-xl sm:text-2xl 
+            w-full h-full rounded-xl sm:rounded-2xl font-bold text-xl sm:text-2xl md:text-3xl 
             bg-[#213247] hover:bg-[#283d57] text-[#4d6b8b] hover:text-[#6a8eb8] 
             border border-[#2d425c] shadow-sm transition-all duration-150 
             flex items-center justify-center active:scale-95 cursor-pointer
@@ -384,6 +382,18 @@
       saveState();
       render();
     };
+
+    // 全螢幕切換按鈕
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+      fullscreenBtn.onclick = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      };
+    }
 
     // 啟動加載
     loadState();
