@@ -41,58 +41,57 @@
 </head>
 <body class="min-h-screen text-slate-100 flex items-center justify-center p-3 sm:p-6 font-sans">
 
-  <!-- 外層主容器 (還原深色卡片與淺米色邊框) -->
-  <div class="w-full max-w-5xl bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-4 sm:p-7 shadow-2xl flex flex-col md:flex-row gap-5 lg:gap-7 items-stretch">
+  <!-- 外層主容器 (深色卡片與淺米色邊框) -->
+  <div class="w-full max-w-5xl bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col gap-4 sm:gap-5">
     
-    <!-- 左側面板：已放學列表與重置按鈕 -->
-    <div class="w-full md:w-72 lg:w-80 flex flex-col justify-between bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-5 shadow-inner">
+    <!-- 置頂控制面板：已放學標題、說明提示、同步狀態與重置按鈕 -->
+    <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-3 sm:p-4 shadow-inner flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
       
-      <!-- 頂部資訊區 -->
-      <div class="flex flex-col items-center">
-        <!-- 頂部白底膠囊標題 -->
-        <div class="w-full bg-white text-slate-900 font-black text-center py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg sm:text-xl tracking-wider">
-          <span class="text-amber-500 text-xl">⭐</span>
+      <!-- 標題與說明提示 -->
+      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+        <!-- 白底膠囊標題 -->
+        <div class="bg-white text-slate-900 font-black py-2 px-5 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg sm:text-xl tracking-wider">
+          <span class="text-amber-500 text-lg sm:text-xl">⭐</span>
           <span>已放學班別</span>
-          <span class="text-amber-500 text-xl">⭐</span>
+          <span class="text-amber-500 text-lg sm:text-xl">⭐</span>
         </div>
 
         <!-- 提示文字 -->
-        <p class="text-amber-400 font-bold text-sm mt-3 tracking-wide text-center">
+        <p class="text-amber-400 font-bold text-sm tracking-wide">
           *白色是已放學班別
         </p>
       </div>
 
-      <!-- 底部重置按鈕與極簡同步狀態 -->
-      <div class="mt-auto pt-4 flex flex-col gap-2.5">
+      <!-- 右側操作區：同步狀態 + 重置按鈕 -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        <!-- 同步資訊狀態標籤（點擊可切換頻道代碼） -->
+        <div 
+          id="openSyncModalBtn" 
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#111c2e] hover:bg-[#18263e] border border-[#22354e] cursor-pointer text-xs text-slate-300 transition-colors shadow-sm"
+          title="點擊切換同步房間"
+        >
+          <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="syncText" class="font-mono">即時同步中</span>
+        </div>
+
+        <!-- 重置按鈕 -->
         <button 
           id="resetBtn"
-          class="w-full py-3.5 px-4 bg-[#10b981] hover:bg-[#059669] active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-base tracking-wide"
+          class="py-2.5 px-5 bg-[#10b981] hover:bg-[#059669] active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm sm:text-base tracking-wide shrink-0"
         >
-          <span class="text-lg">🔄</span>
+          <span class="text-base">🔄</span>
           <span>重置班牌</span>
         </button>
-
-        <!-- 隱藏式/精簡同步資訊（點擊可換房間） -->
-        <div class="flex items-center justify-between px-2 pt-1 text-[11px] text-slate-500">
-          <div class="flex items-center gap-1.5 cursor-pointer hover:text-slate-400" id="openSyncModalBtn" title="點擊切換同步房間">
-            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="syncText">即時同步中</span>
-          </div>
-          <span class="text-[10px] text-slate-600">iPad / 電視同步</span>
-        </div>
       </div>
 
     </div>
 
-    <!-- 右側面板：班牌網格區 (6年級 x 5班) -->
-    <div class="flex-1 bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-6 shadow-inner flex flex-col justify-center">
-      
+    <!-- 下方主面板：班牌網格區 (6年級 x 5班) -->
+    <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-4 sm:p-6 shadow-inner flex flex-col justify-center">
       <!-- 6行 x 5列 網格 -->
-      <div id="gridContainer" class="grid grid-cols-5 gap-3 sm:gap-4 lg:gap-4 w-full h-full content-center">
+      <div id="gridContainer" class="grid grid-cols-5 gap-2.5 sm:gap-3.5 lg:gap-4 w-full content-center">
         <!-- 由 JavaScript 動態生成班級按鈕 (6A-6E 至 1A-1E) -->
       </div>
-    </div>
-
     </div>
 
   </div>
@@ -107,7 +106,7 @@
         <button id="closeSyncModalBtn" class="text-slate-400 hover:text-white text-xl">✕</button>
       </div>
       <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-        在 iPad 和電視／大螢幕網頁輸入<strong class="text-amber-400">相同的同步頻道代碼</strong>，iPad 上一按班牌，大螢幕將在 0.5 秒內即時同步變色！
+        在 iPad 和電視／大螢幕網頁輸入<strong class="text-amber-400">相同的同步頻道代碼</strong>，iPad 上一按班牌，大螢幕將即時同步變色！
       </p>
       <div class="mb-4">
         <label class="block text-xs font-medium text-slate-400 mb-1">同步頻道代碼 (Room ID)</label>
@@ -143,7 +142,6 @@
     const ROOM_STORAGE_KEY = 'school_sync_room_id';
     let currentRoom = 'school-dismissal-board-default';
     let mqttClient = null;
-    let isBroadcasting = false;
 
     // 初始化與加載已保存狀態
     async function loadState() {
@@ -234,7 +232,7 @@
       }
     }
 
-    // 初始化跨裝置即時廣播 (MQTT over WSS，免伺服器即開即用)
+    // 初始化跨裝置即時廣播 (MQTT over WSS)
     function initRealtimeSync() {
       const syncDot = document.getElementById('syncDot');
       const syncText = document.getElementById('syncText');
@@ -244,7 +242,6 @@
       }
 
       try {
-        // 連接公共安全 WebSocket 廣播 Broker (支援 iPad、電視、手機零延遲同步)
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
           clientId: 'board_' + Math.random().toString(16).substr(2, 8),
           clean: true,
@@ -253,7 +250,7 @@
 
         mqttClient.on('connect', () => {
           syncDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-          syncText.textContent = `同步連線中 (房號: ${currentRoom.substring(0, 10)}...)`;
+          syncText.textContent = `同步連線中 (${currentRoom.substring(0, 10)}...)`;
           mqttClient.subscribe(`sayo-school/${currentRoom}`);
         });
 
@@ -261,14 +258,13 @@
           try {
             const data = JSON.parse(message.toString());
             if (data && Array.isArray(data.released)) {
-              // 比較是否有變動
               const newArr = data.released;
               const currentArr = Array.from(releasedClasses);
               const isDifferent = newArr.length !== currentArr.length || newArr.some(c => !releasedClasses.has(c));
               
               if (isDifferent) {
                 releasedClasses = new Set(newArr);
-                saveState(true); // 本地保存，不重複外播
+                saveState(true);
                 render();
               }
             }
@@ -358,20 +354,18 @@
         btn.textContent = cls;
         btn.setAttribute('data-class', cls);
 
-        // 樣式 100% 還原原圖：
-        // 未放學：深青藍按鈕底色 (#1f2f45)、暗藍文字 (#466482)、圓角與細邊框
-        // 已放學：亮白底色 (#ffffff)、深黑文字、強烈白色光暈光芒 (glow)
+        // 未放學 vs 已放學樣式
         if (isReleased) {
           btn.className = `
-            h-14 sm:h-16 lg:h-16 rounded-xl font-black text-xl sm:text-2xl 
+            h-14 sm:h-16 lg:h-18 rounded-xl font-black text-xl sm:text-2xl 
             bg-white text-slate-900 border-2 border-white
-            shadow-[0_0_20px_rgba(255,255,255,0.7),0_0_35px_rgba(255,255,255,0.35)] 
+            shadow-[0_0_22px_rgba(255,255,255,0.75),0_0_36px_rgba(255,255,255,0.4)] 
             scale-[1.02] z-10 transition-all duration-150 
             flex items-center justify-center active:scale-95 cursor-pointer
           `;
         } else {
           btn.className = `
-            h-14 sm:h-16 lg:h-16 rounded-xl font-bold text-xl sm:text-2xl 
+            h-14 sm:h-16 lg:h-18 rounded-xl font-bold text-xl sm:text-2xl 
             bg-[#213247] hover:bg-[#283d57] text-[#4d6b8b] hover:text-[#6a8eb8] 
             border border-[#2d425c] shadow-sm transition-all duration-150 
             flex items-center justify-center active:scale-95 cursor-pointer
