@@ -123,27 +123,6 @@
     </div>
   </div>
 
-  <!-- 所有班別已解散彈窗 (還原實體截圖畫面) -->
-  <div id="allDismissedModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white text-slate-900 rounded-3xl p-7 sm:p-9 max-w-[280px] sm:max-w-xs w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 transform transition-transform">
-      <!-- 慶祝圖示 -->
-      <div class="text-5xl sm:text-6xl mb-3 select-none">
-        🎉
-      </div>
-      <!-- 核心標題文字 -->
-      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-wider mb-6 leading-snug">
-        所有班別已解散
-      </h2>
-      <!-- 藍色確定按鈕 -->
-      <button 
-        id="closeDismissedModalBtn" 
-        class="min-w-[120px] px-8 py-2.5 bg-[#0284c7] hover:bg-[#0369a1] active:scale-95 text-white font-bold text-base sm:text-lg rounded-xl shadow-md transition-all cursor-pointer"
-      >
-        確定
-      </button>
-    </div>
-  </div>
-
   <script>
     // 班級配置：6年級到1年級，每級 A 至 E
     const GRADES = ['6', '5', '4', '3', '2', '1'];
@@ -394,40 +373,12 @@
         btn.onclick = () => toggleClass(cls);
         grid.appendChild(btn);
       });
-
-      checkAllDismissed();
     }
-
-    // 檢查是否全部班級已放學解散
-    const allDismissedModal = document.getElementById('allDismissedModal');
-    let hasDismissedModalBeenClosed = false;
-
-    function checkAllDismissed() {
-      const isAllDismissed = ALL_CLASSES.length > 0 && releasedClasses.size === ALL_CLASSES.length;
-      if (isAllDismissed) {
-        if (!hasDismissedModalBeenClosed) {
-          allDismissedModal.classList.remove('hidden');
-          allDismissedModal.classList.add('flex');
-        }
-      } else {
-        hasDismissedModalBeenClosed = false;
-        allDismissedModal.classList.add('hidden');
-        allDismissedModal.classList.remove('flex');
-      }
-    }
-
-    // 關閉全部解散彈窗
-    document.getElementById('closeDismissedModalBtn').onclick = () => {
-      hasDismissedModalBeenClosed = true;
-      allDismissedModal.classList.add('hidden');
-      allDismissedModal.classList.remove('flex');
-    };
 
     // 重置按鈕
     document.getElementById('resetBtn').onclick = () => {
       if (releasedClasses.size === 0) return;
       releasedClasses.clear();
-      hasDismissedModalBeenClosed = false;
       saveState();
       render();
     };
