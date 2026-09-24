@@ -94,6 +94,20 @@
 
   </div>
 
+  <!-- 所有班別已解散 彈窗 (完全還原實物樣式：白底圓角、彩帶拉炮、大粗體、藍色確定按鈕) -->
+  <div id="allDismissedModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-8 sm:p-10 max-w-xs sm:max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
+      <div class="text-6xl sm:text-7xl mb-5">🎉</div>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-8 tracking-wider">所有班別已解散</h2>
+      <button 
+        id="confirmDismissedBtn"
+        class="w-full max-w-[180px] py-3.5 px-6 bg-[#007aff] hover:bg-[#0066d6] active:scale-95 text-white font-bold text-lg rounded-2xl shadow-lg transition-all"
+      >
+        確定
+      </button>
+    </div>
+  </div>
+
   <!-- 房間設定彈窗 -->
   <div id="syncModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-[#111c2e] border border-[#e6d5b8]/50 rounded-2xl p-6 max-w-md w-full shadow-2xl text-slate-100">
@@ -140,6 +154,24 @@
     const ROOM_STORAGE_KEY = 'school_sync_room_id';
     let currentRoom = 'school-dismissal-board-default';
     let mqttClient = null;
+    let hasDismissedModalShown = false;
+
+    // 檢查是否所有班級皆已放學並彈窗
+    function checkAllDismissed() {
+      const modal = document.getElementById('allDismissedModal');
+      if (!modal) return;
+      if (releasedClasses.size === ALL_CLASSES.length && ALL_CLASSES.length > 0) {
+        if (!hasDismissedModalShown) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          hasDismissedModalShown = true;
+        }
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        hasDismissedModalShown = false;
+      }
+    }
 
     // 初始化與加載已保存狀態
     async function loadState() {
@@ -373,12 +405,30 @@
         btn.onclick = () => toggleClass(cls);
         grid.appendChild(btn);
       });
+
+      // 檢查是否全部解散
+      checkAllDismissed();
     }
+
+    // 確定關閉全解散彈窗
+    document.getElementById('confirmDismissedBtn').onclick = () => {
+      const modal = document.getElementById('allDismissedModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    };
 
     // 重置按鈕
     document.getElementById('resetBtn').onclick = () => {
       if (releasedClasses.size === 0) return;
       releasedClasses.clear();
+      hasDismissedModalShown = false;
+      const modal = document.getElementById('allDismissedModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
       saveState();
       render();
     };
