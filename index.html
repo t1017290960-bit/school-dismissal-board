@@ -18,18 +18,32 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    html { font-size: 18px; }
     body {
       background-color: #0b1320;
       user-select: none;
       -webkit-user-select: none;
     }
+    @keyframes modal-enter { from { opacity: 0; transform: translateY(18px) scale(.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes party-pop { 0%, 100% { transform: translateY(0) rotate(0) scale(1); } 25% { transform: translateY(-12px) rotate(-10deg) scale(1.16); } 55% { transform: translateY(0) rotate(8deg) scale(.96); } }
+    @keyframes confetti-burst { 0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(.35); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1); } }
+    .celebration-card { position: relative; overflow: hidden; isolation: isolate; animation: modal-enter .42s cubic-bezier(.2,.8,.2,1) both; }
+    .celebration-card > :not(.celebration-confetti) { position: relative; z-index: 1; }
+    .celebration-icon { transform-origin: center; animation: party-pop 1.6s ease-in-out infinite; }
+    .celebration-confetti { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .celebration-confetti span { position: absolute; left: 50%; top: 28%; opacity: 0; font-size: 1.5rem; animation: confetti-burst 2.6s ease-out infinite; }
+    .celebration-confetti span:nth-child(1) { --dx: -145px; --dy: -78px; --rot: 240deg; }
+    .celebration-confetti span:nth-child(2) { --dx: -105px; --dy: 22px; --rot: -180deg; animation-delay: .25s; }
+    .celebration-confetti span:nth-child(3) { --dx: -65px; --dy: -105px; --rot: 210deg; animation-delay: .5s; }
+    .celebration-confetti span:nth-child(4) { --dx: 65px; --dy: -105px; --rot: -220deg; animation-delay: .75s; }
+    .celebration-confetti span:nth-child(5) { --dx: 108px; --dy: 18px; --rot: 180deg; animation-delay: 1s; }
+    .celebration-confetti span:nth-child(6) { --dx: 145px; --dy: -72px; --rot: -240deg; animation-delay: 1.25s; }
+    @media (prefers-reduced-motion: reduce) { .celebration-card, .celebration-icon, .celebration-confetti span { animation: none !important; } }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col items-center justify-center p-2 sm:p-4 font-sans bg-[#0b1320]">
 
   <!-- 外層主容器：專為大螢幕直向/直立分屏打造 (Portrait 滿版直屏佈局) -->
-  <div class="w-full max-w-xl sm:max-w-2xl h-full flex flex-col bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-3 sm:p-4 shadow-2xl gap-2.5 sm:gap-3.5">
+  <div class="w-full max-w-2xl sm:max-w-4xl h-full flex flex-col bg-[#111c2e] border-2 border-[#e6d5b8] rounded-2xl p-3 sm:p-4 shadow-2xl gap-2.5 sm:gap-3.5">
     
     <!-- 置頂控制面板：醒目標題、提示與控制按鈕 -->
     <div class="w-full bg-[#0c1626] border border-[#22354e] rounded-xl p-2.5 sm:p-3.5 shadow-inner flex flex-col items-center gap-2 shrink-0">
@@ -37,10 +51,10 @@
       <!-- 標題欄與全螢幕按鈕 -->
       <div class="w-full flex items-center justify-between gap-2">
         <!-- 白底特大膠囊標題 (大幅放大高度與字號) -->
-        <div class="flex-1 bg-white text-slate-900 font-black py-3.5 sm:py-5 px-4 sm:px-6 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-widest">
-          <span class="text-amber-500 text-2xl sm:text-4xl md:text-5xl">⭐</span>
+        <div class="flex-1 bg-white text-slate-900 font-black py-3.5 sm:py-5 px-4 sm:px-6 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-2xl sm:text-5xl md:text-6xl lg:text-7xl tracking-widest">
+          <span class="text-amber-500 text-3xl sm:text-5xl md:text-6xl">⭐</span>
           <span class="drop-shadow-sm">已放學班別</span>
-          <span class="text-amber-500 text-2xl sm:text-4xl md:text-5xl">⭐</span>
+          <span class="text-amber-500 text-3xl sm:text-5xl md:text-6xl">⭐</span>
         </div>
 
         <!-- 一鍵全螢幕按鈕 (便於大螢幕直向展示) -->
@@ -97,8 +111,9 @@
 
   <!-- 所有班別已解散 彈窗 (完全還原實物樣式：白底圓角、彩帶拉炮、大粗體、藍色確定按鈕) -->
   <div id="allDismissedModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-8 sm:p-10 max-w-xs sm:max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
-      <div class="text-6xl sm:text-7xl mb-5">🎉</div>
+    <div class="celebration-card bg-white rounded-3xl p-8 sm:p-10 max-w-xs sm:max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
+      <div class="celebration-confetti" aria-hidden="true"><span>🎊</span><span>✨</span><span>🎉</span><span>⭐</span><span>✨</span><span>🎊</span></div>
+      <div class="celebration-icon text-6xl sm:text-7xl mb-5">🎉</div>
       <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-8 tracking-wider">所有班別已解散</h2>
       <button 
         id="confirmDismissedBtn"
@@ -388,7 +403,7 @@
         // 未放學 vs 已放學樣式 (均分縱向高度，加大一級字號更醒目)
         if (isReleased) {
           btn.className = `
-            w-full h-full rounded-xl sm:rounded-2xl font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl 
+            w-full h-full rounded-xl sm:rounded-2xl font-black text-4xl sm:text-6xl md:text-7xl lg:text-8xl 
             bg-white text-slate-900 border-2 sm:border-4 border-white
             shadow-[0_0_24px_rgba(255,255,255,0.85),0_0_40px_rgba(255,255,255,0.45)] 
             scale-[1.03] z-10 transition-all duration-150 
@@ -396,7 +411,7 @@
           `;
         } else {
           btn.className = `
-            w-full h-full rounded-xl sm:rounded-2xl font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl 
+            w-full h-full rounded-xl sm:rounded-2xl font-extrabold text-3xl sm:text-5xl md:text-6xl lg:text-7xl 
             bg-[#213247] hover:bg-[#283d57] text-[#4d6b8b] hover:text-[#6a8eb8] 
             border border-[#2d425c] shadow-sm transition-all duration-150 
             flex items-center justify-center active:scale-95 cursor-pointer
